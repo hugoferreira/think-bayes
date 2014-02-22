@@ -7,6 +7,8 @@ object ProbabilisticProgramming {
         case _       => probabilities
       }
 
+    def mean(implicit ev: A =:= Int) = probabilities.foldLeft(0.0) { case (acc, (k, v)) => acc + (k * v) }
+
     def normalized = {
       val x = probabilities.values.sum
       probabilities.mapValues(_ / x)
@@ -22,10 +24,11 @@ object ProbabilisticProgramming {
       else {
         val data = if (ord == null) probabilities.toList else probabilities.toList.sortBy(_._1)
         val scale = 60
-        val maxWidth = data.map(_._1.toString.length).max
-        val fmt = "%" + maxWidth + "s %s %s"
+        val keyWidth = data.map(_._1.toString.length).max
+        val maxP = data.map(_._2).max
+        val fmt = "%" + keyWidth + "s %s %s"
         data.foreach { case (b, p) =>
-          val hashes = (p * scale).toInt
+          val hashes = (p * scale / maxP).toInt
           println(fmt.format(b.toString, f"$p%.2f", "#" * hashes))
         }
       }
@@ -102,3 +105,12 @@ object DnD extends App {
   Seq(4, 6, 8, 12, 20).observe(6, 6, 8, 7, 7, 5, 4).hist()
 }
 
+object Locomotive extends App {
+  import ProbabilisticProgramming._
+
+  implicit val likelihood = (hypo: Int, data: Int) => if (hypo < data) 0.0 else 1.0 / hypo
+  val posterior = (1 to 1000).observe(60)
+
+  println(posterior.get(60))
+  println(posterior.mean)
+}
