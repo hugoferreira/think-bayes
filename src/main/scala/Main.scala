@@ -31,7 +31,7 @@ object ProbabilisticProgramming {
       }
   }
 
-  implicit def pmfFromSequence[A](possibilities: Seq[A]): Pmf[A] =
+  implicit def pmfFromIterable[A](possibilities: Iterable[A]): Pmf[A] =
     possibilities.groupBy(identity).map { case (k, as) => k -> as.size.toDouble}.toMap.normalized
 }
 
@@ -50,6 +50,17 @@ object Main extends App {
   val pmf3 = pmf2.multiply("Heads", 0.75).multiply("Tails", 0.5).normalized
 
   println(pmf3)
+}
+
+object Cookies extends App {
+  import ProbabilisticProgramming._
+
+  val mixes = Map('Bowl1 -> Map('vanilla -> 0.75, 'chocolate -> 0.25),
+                  'Bowl2 -> Map('vanilla -> 0.5,  'chocolate -> 0.5))
+
+  implicit val likelihood = (hypo: Symbol, data: Symbol) => mixes(hypo)(data)
+
+  println(mixes.keys.observe('vanilla))
 }
 
 object MontyHall extends App {
@@ -80,5 +91,5 @@ object MnM extends App {
     hypotheses(hypo)(bag)(color).toDouble
   }
 
-  println(Seq('A, 'B).observe(('bag1, 'yellow)).observe(('bag2, 'green)))
+  println(hypotheses.keys.observe(('bag1, 'yellow)).observe(('bag2, 'green)))
 }
