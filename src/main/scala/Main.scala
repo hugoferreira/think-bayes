@@ -12,8 +12,8 @@ object ProbabilisticProgramming {
       probabilities.mapValues(_ / x)
     }
 
-    def observe[B](k: B)(implicit likelihood: (A, B) => Double) =
-      probabilities.map { case (h, p) => (h, p * likelihood(h, k)) }.toMap.normalized
+    def observe[B](os: B*)(implicit likelihood: (A, B) => Double) =
+      os.foldLeft(probabilities) { case (pmf, o) => pmf.map { case (h, p) => (h, p * likelihood(h, o)) } }.normalized
 
     override def toString = probabilities.toString()
 
@@ -21,7 +21,7 @@ object ProbabilisticProgramming {
       if (probabilities.isEmpty) println("impossible")
       else {
         val data = if (ord == null) probabilities.toList else probabilities.toList.sortBy(_._1)
-        val scale = 100
+        val scale = 60
         val maxWidth = data.map(_._1.toString.length).max
         val fmt = "%" + maxWidth + "s %s %s"
         data.foreach { case (b, p) =>
@@ -40,7 +40,6 @@ object Main extends App {
 
   // val pmf = (1 to 6).foldLeft(Pmf[Int]()) { case (pmf, k) => pmf.set(k, 1.0 / 6) }
   val pmf = (1 to 6).map(_ -> 1.0).toMap.normalized
-
   val pmf2 = (("Heads" -> 0.5) :: ("Tails" -> 0.5) :: Nil).toMap
 
   println(pmf)
@@ -55,12 +54,13 @@ object Main extends App {
 object Cookies extends App {
   import ProbabilisticProgramming._
 
-  val mixes = Map('Bowl1 -> Map('vanilla -> 0.75, 'chocolate -> 0.25),
-                  'Bowl2 -> Map('vanilla -> 0.5,  'chocolate -> 0.5))
+  val hypoA = Map('vanilla -> 0.75, 'chocolate -> 0.25)
+  val hypoB = Map('vanilla -> 0.5,  'chocolate -> 0.5)
+  val hypotheses = Map('Bowl1 -> hypoA, 'Bowl2 -> hypoB)
 
-  implicit val likelihood = (hypo: Symbol, data: Symbol) => mixes(hypo)(data)
+  implicit val likelihood = hypotheses(_: Symbol)(_: Symbol)
 
-  println(mixes.keys.observe('vanilla))
+  hypotheses.keys.observe('vanilla).hist()
 }
 
 object MontyHall extends App {
@@ -91,5 +91,13 @@ object MnM extends App {
     hypotheses(hypo)(bag)(color).toDouble
   }
 
-  println(hypotheses.keys.observe(('bag1, 'yellow)).observe(('bag2, 'green)))
+  hypotheses.keys.observe(('bag1, 'yellow)).observe(('bag2, 'green)).hist()
+}
+
+object DnD extends App {
+  import ProbabilisticProgramming._
+
+  implicit val likelihood = (hypo: Int, data: Int) => if (hypo < data) 0.0 else 1.0 / hypo
+
+  Seq(4, 6, 8, 12, 20).observe(6, 6, 8, 7, 7, 5, 4).hist()
 }
