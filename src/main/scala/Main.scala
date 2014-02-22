@@ -1,19 +1,19 @@
 object ProbabilisticProgramming {
   implicit class Pmf[A](probabilities: Map[A, Double]) {
-    def set(k: A, v: Double): Pmf[A] = probabilities + (k -> v)
-    def multiply(k: A, v: Double): Pmf[A] =
+    def set(k: A, v: Double) = probabilities + (k -> v)
+    def multiply(k: A, v: Double) =
       probabilities.get(k) match {
         case Some(w) => probabilities.updated(k, v * w)
         case _       => probabilities
       }
 
-    def normalized: Pmf[A] = {
+    def normalized = {
       val x = probabilities.values.sum
       probabilities.mapValues(_ / x)
     }
 
-    def observe[B](os: B*)(implicit likelihood: (A, B) => Double) =
-      os.foldLeft(probabilities) { case (pmf, o) => pmf.map { case (h, p) => (h, p * likelihood(h, o)) } }.normalized
+    def observe[B](obs: B*)(implicit likelihood: (A, B) => Double) =
+      obs.foldLeft(probabilities) { case (pmf, o) => pmf.map { case (h, p) => (h, p * likelihood(h, o)) } }.normalized
 
     override def toString = probabilities.toString()
 
@@ -101,3 +101,4 @@ object DnD extends App {
 
   Seq(4, 6, 8, 12, 20).observe(6, 6, 8, 7, 7, 5, 4).hist()
 }
+
