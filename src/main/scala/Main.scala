@@ -12,7 +12,7 @@ object ProbabilisticProgramming {
       probabilities.mapValues(_ / x)
     }
 
-    def observe(k: A)(implicit likelihood: (A, A) => Double) =
+    def observe[B](k: B)(implicit likelihood: (A, B) => Double) =
       probabilities.map { case (h, p) => (h, p * likelihood(h, k)) }.toMap.normalized
 
     override def toString = probabilities.toString()
@@ -50,14 +50,35 @@ object Main extends App {
   val pmf3 = pmf2.multiply("Heads", 0.75).multiply("Tails", 0.5).normalized
 
   println(pmf3)
+}
 
-  // Monty Hall Problem
+object MontyHall extends App {
+  import ProbabilisticProgramming._
 
-  implicit val likelihood = (hypo: String, data: String) => hypo match {
+  implicit val likelihood = (hypo: Symbol, data: Symbol) => hypo match {
     case `data` => 0
-    case "A"    => 0.5
+    case 'A     => 0.5
     case _      => 1
   }
 
-  Seq("A", "B", "C").observe("B").hist()
+  Seq('A, 'B, 'C).observe('B).hist()
+}
+
+object MnM extends App {
+  import ProbabilisticProgramming._
+
+  val mix94 = Map('brown -> 30, 'yellow -> 20, 'red -> 20, 'green -> 10, 'orange -> 10, 'tan -> 10)
+  val mix96 = Map('blue -> 24, 'green -> 20, 'orange -> 16, 'yellow -> 14, 'red -> 13, 'brown -> 13)
+
+  val hypoA = Map('bag1 -> mix94, 'bag2 -> mix96)
+  val hypoB = Map('bag1 -> mix96, 'bag2 -> mix94)
+
+  val hypotheses = Map('A -> hypoA, 'B -> hypoB)
+
+  implicit val likelihood = (hypo: Symbol, data: (Symbol, Symbol)) => {
+    val (bag, color) = data
+    hypotheses(hypo)(bag)(color).toDouble
+  }
+
+  println(Seq('A, 'B).observe(('bag1, 'yellow)).observe(('bag2, 'green)))
 }

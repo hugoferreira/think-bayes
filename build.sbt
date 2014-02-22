@@ -13,4 +13,5 @@ scalacOptions ++= Seq(
   "-deprecation",
   "-unchecked",
   "-feature",
-  "-language:higherKinds")
+  "-language:higherKinds",
+  "-language:implicitConversions")
