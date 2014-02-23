@@ -34,11 +34,13 @@ object ProbabilisticProgramming {
       }
   }
 
-  implicit def pmfFromIterable[A](possibilities: Iterable[A]): Pmf[A] =
+  implicit def fromIterable[A](possibilities: Iterable[A]): Pmf[A] =
     possibilities.groupBy(identity).map { case (k, as) => k -> as.size.toDouble}.toMap.normalized
 
-  def powerLaw(possibilities: Iterable[Int], alpha: Double = 1.0): Pmf[Int] =
-    possibilities.map(k => (k, Math.pow(k.toDouble, -alpha))).toMap.normalized
+  object Distributions {
+    def powerLaw(possibilities: Iterable[Int], alpha: Double = 1.0) =
+      possibilities.map(k => (k, Math.pow(k.toDouble, -alpha))).toMap.normalized
+  }
 }
 
 object Main extends App {
@@ -114,6 +116,23 @@ object Locomotive extends App {
   implicit val likelihood = (hypo: Int, data: Int) => if (hypo < data) 0.0 else 1.0 / hypo
   val posterior = (1 to 1000).observe(60)
 
-  println(posterior.get(60))
-  println(posterior.mean)
+  println("p(n=60|60) = " + posterior.get(60))
+  println("mean of the posterior: " + posterior.mean)
+  println("p(n=60|60,30,90) = " + posterior.observe(30, 90).get(60))
+  println("p(n=90|60,30,90) = " + posterior.observe(30, 90).get(90))
+  println("mean of the posterior: " + posterior.observe(30, 90).mean)
+}
+
+object Locomotive2 extends App {
+  import ProbabilisticProgramming._
+
+  implicit val likelihood = (hypo: Int, data: Int) => if (hypo < data) 0.0 else 1.0 / hypo
+  val hypotheses = Distributions.powerLaw(1 to 1000)
+  val posterior  = hypotheses.observe(60)
+
+  println("p(n|60) = " + posterior.get(60))
+  println("mean of the posterior: " + posterior.mean)
+  println("p(n=60|60,30,90) = " + posterior.observe(30, 90).get(60))
+  println("p(n=90|60,30,90) = " + posterior.observe(30, 90).get(90))
+  println("mean of the posterior: " + posterior.observe(30, 90).mean)
 }
