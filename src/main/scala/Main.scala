@@ -36,6 +36,9 @@ object ProbabilisticProgramming {
 
   implicit def pmfFromIterable[A](possibilities: Iterable[A]): Pmf[A] =
     possibilities.groupBy(identity).map { case (k, as) => k -> as.size.toDouble}.toMap.normalized
+
+  def powerLaw(possibilities: Iterable[Int], alpha: Double = 1.0): Pmf[Int] =
+    possibilities.map(k => (k, Math.pow(k.toDouble, -alpha))).toMap.normalized
 }
 
 object Main extends App {
