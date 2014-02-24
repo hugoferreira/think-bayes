@@ -14,6 +14,7 @@ object ProbabilisticProgramming {
       case ((map, cum), (k, p)) => (map + (k -> (cum + p)), cum + p)
     }._1
 
+    // This would probably benefit from a binary search, considering CDF is ordered on both the key and value
     def percentile(p: Double)(implicit ord: Ordering[A]): A = cdf.dropWhile { _._2 < p }.head._1
     def credibility(lower: Double, upper: Double)(implicit ord: Ordering[A]): (A, A) = (percentile(lower), percentile(upper))
 
@@ -162,6 +163,21 @@ object Euro extends App {
   implicit val likelihood = (hypo: Int, data: Symbol) => if (data == 'H) hypo / 100.0 else 1 - hypo / 100.0
 
   val prior = 0 to 100
+  val posterior = prior.observe((1 to 140).map(_ => 'H) ++ (1 to 110).map(_ => 'T) : _*)
+
+  posterior.hist(trim = true)
+  println(f"Mean = ${posterior.mean}%.2f")
+  println(s"Median = ${posterior.percentile(0.5)}")
+  println(s"Credible Interval (0.05, 0.95) = ${posterior.credibility(0.05, 0.95)}")
+}
+
+object EuroSwamped extends App {
+  import ProbabilisticProgramming._
+
+  implicit val likelihood = (hypo: Int, data: Symbol) => if (data == 'H) hypo / 100.0 else 1 - hypo / 100.0
+
+  val prior = (0 to 100).map { i => i -> (if (i <= 5) i.toDouble else 100.0 - i) }.toMap
+
   val posterior = prior.observe((1 to 140).map(_ => 'H) ++ (1 to 110).map(_ => 'T) : _*)
 
   posterior.hist(trim = true)
