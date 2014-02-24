@@ -1,3 +1,5 @@
+import scala.collection.immutable.TreeMap
+
 object ProbabilisticProgramming {
   implicit class Pmf[A](probabilities: Map[A, Double]) {
     def set(k: A, v: Double) = probabilities + (k -> v)
@@ -9,15 +11,11 @@ object ProbabilisticProgramming {
 
     def mean(implicit n: Numeric[A]) = probabilities.foldLeft(0.0) { case (acc, (k, v)) => acc + n.toDouble(k) * v }
 
-    def cdf(implicit ord: Ordering[A]) = probabilities.toList.sortBy(_._1).foldLeft((Map.empty[A, Double], 0.0)) {
+    def cdf(implicit ord: Ordering[A]) = probabilities.toList.sortBy(_._1).foldLeft((TreeMap.empty[A, Double], 0.0)) {
       case ((map, cum), (k, p)) => (map + (k -> (cum + p)), cum + p)
     }._1
 
-    def percentile(p: Double)(implicit ord: Ordering[A]): A = {
-      val sortedList = probabilities.toList.sortBy(_._1)
-      sortedList.foldLeft(0.0) { case (acc, (k, v)) => if (acc + v >= p) return k else acc + v }
-      sortedList.head._1
-    }
+    def percentile(p: Double)(implicit ord: Ordering[A]): A = cdf.dropWhile { _._2 < p }.head._1
 
     def normalized = {
       val x = probabilities.values.sum
@@ -135,6 +133,8 @@ object Locomotive extends App {
   println(s"p(n=60|60,30,90) = ${posteriorB.get(60)}")
   println(s"p(n=90|60,30,90) = ${posteriorB.get(90)}")
   println(s"mean of the posterior: ${posteriorB.mean}")
+
+  println(s"Credible Interval (0.05, 0.95) = (${posteriorB.percentile(0.05)}, ${posteriorB.percentile(0.95)})")
 }
 
 object Locomotive2 extends App {
@@ -150,8 +150,6 @@ object Locomotive2 extends App {
   println(s"p(n=60|60,30,90) = ${posteriorB.get(60)}")
   println(s"p(n=90|60,30,90) = ${posteriorB.get(90)}")
   println(s"mean of the posterior: ${posteriorB.mean}")
-
-  posteriorB.cdf.hist()
 
   println(s"Credible Interval (0.05, 0.95) = (${posteriorB.percentile(0.05)}, ${posteriorB.percentile(0.95)})")
 }
