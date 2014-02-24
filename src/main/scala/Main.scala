@@ -13,6 +13,12 @@ object ProbabilisticProgramming {
       case ((map, cum), (k, p)) => (map + (k -> (cum + p)), cum + p)
     }._1
 
+    def percentile(p: Double)(implicit ord: Ordering[A]): A = {
+      val sortedList = probabilities.toList.sortBy(_._1)
+      sortedList.foldLeft(0.0) { case (acc, (k, v)) => if (acc + v >= p) return k else acc + v }
+      sortedList.head._1
+    }
+
     def normalized = {
       val x = probabilities.values.sum
       probabilities.mapValues(_ / x)
@@ -121,13 +127,14 @@ object Locomotive extends App {
   import ProbabilisticProgramming._
 
   implicit val likelihood = (hypo: Int, data: Int) => if (hypo < data) 0.0 else 1.0 / hypo
-  val posterior = (1 to 1000).observe(60)
+  val posteriorA = (1 to 1000).observe(60)
+  val posteriorB = (1 to 1000).observe(60)
 
-  println("p(n=60|60) = " + posterior.get(60))
-  println("mean of the posterior: " + posterior.mean)
-  println("p(n=60|60,30,90) = " + posterior.observe(30, 90).get(60))
-  println("p(n=90|60,30,90) = " + posterior.observe(30, 90).get(90))
-  println("mean of the posterior: " + posterior.observe(30, 90).mean)
+  println(s"p(n|60) = ${posteriorA.get(60)}")
+  println(s"mean of the posterior: ${posteriorA.mean}")
+  println(s"p(n=60|60,30,90) = ${posteriorB.get(60)}")
+  println(s"p(n=90|60,30,90) = ${posteriorB.get(90)}")
+  println(s"mean of the posterior: ${posteriorB.mean}")
 }
 
 object Locomotive2 extends App {
@@ -135,11 +142,16 @@ object Locomotive2 extends App {
 
   implicit val likelihood = (hypo: Int, data: Int) => if (hypo < data) 0.0 else 1.0 / hypo
   val hypotheses = Distributions.powerLaw(1 to 1000)
-  val posterior  = hypotheses.observe(60)
+  val posteriorA = hypotheses.observe(60)
+  val posteriorB = hypotheses.observe(60, 30, 90)
 
-  println("p(n|60) = " + posterior.get(60))
-  println("mean of the posterior: " + posterior.mean)
-  println("p(n=60|60,30,90) = " + posterior.observe(30, 90).get(60))
-  println("p(n=90|60,30,90) = " + posterior.observe(30, 90).get(90))
-  println("mean of the posterior: " + posterior.observe(30, 90).mean)
+  println(s"p(n|60) = ${posteriorA.get(60)}")
+  println(s"mean of the posterior: ${posteriorA.mean}")
+  println(s"p(n=60|60,30,90) = ${posteriorB.get(60)}")
+  println(s"p(n=90|60,30,90) = ${posteriorB.get(90)}")
+  println(s"mean of the posterior: ${posteriorB.mean}")
+
+  posteriorB.cdf.hist()
+
+  println(s"Credible Interval (0.05, 0.95) = (${posteriorB.percentile(0.05)}, ${posteriorB.percentile(0.95)})")
 }
