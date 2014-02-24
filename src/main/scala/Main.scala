@@ -1,3 +1,4 @@
+import scala.annotation.tailrec
 import scala.collection.immutable.TreeMap
 
 object ProbabilisticProgramming {
@@ -41,6 +42,41 @@ object ProbabilisticProgramming {
           if (!trim || hashes > 0) println(fmt.format(b.toString, f"$p%.2f", "#" * hashes))
         }
       }
+
+    def samples: Stream[A] = {
+      val (small, large) = normalized.partition { _._2 < 1.0 }
+
+      @tailrec
+      def alias(small: List[(A, Double)], large: List[(A, Double)], rest: List[(A, Double, Option[A])]): List[(A, Double, Option[A])] =
+        (small, large) match {
+          case ((s, ps) :: ss, (l, pl) :: ll) =>
+            val remainder = (l, pl - (1.0 - ps))
+            val newRest = (s, ps, Some(l)) :: rest
+            if (remainder._2 < 1)
+              alias(remainder :: ss, ll, newRest)
+            else
+              alias(ss, remainder :: ll, newRest)
+          case (_, (l, _) :: ll) =>
+            alias(small, ll, (l, 1.0, None) :: rest)
+          case ((s, _) :: ss, _) =>
+            alias(ss, large, (s, 1.0, None) :: rest)
+          case _ =>
+            rest
+        }
+
+      val len = probabilities.size
+      val table = Vector() ++ alias(small, large, Nil)
+      def select(p1: Double, p2: Double, table: Vector[(A, Double, Option[A])]): A =
+        table((p1 * len).toInt) match {
+          case (a, _, None)    => a
+          case (a, p, Some(b)) => if (p2 <= p) a else b
+        }
+
+
+      import scala.util.Random._
+
+      Stream.continually(select(nextDouble(), nextDouble(), table))
+    }
   }
 
   implicit def fromIterable[A](possibilities: Iterable[A]): Pmf[A] =
