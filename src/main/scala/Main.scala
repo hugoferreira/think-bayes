@@ -28,7 +28,7 @@ object ProbabilisticProgramming {
 
     override def toString = probabilities.toString()
 
-    def hist()(implicit ord: Ordering[A] = null) =
+    def hist(trim: Boolean = false)(implicit ord: Ordering[A] = null) =
       if (probabilities.isEmpty) println("impossible")
       else {
         val data = if (ord == null) probabilities.toList else probabilities.toList.sortBy(_._1)
@@ -38,7 +38,7 @@ object ProbabilisticProgramming {
         val fmt = "%" + keyWidth + "s %s %s"
         data.foreach { case (b, p) =>
           val hashes = (p * scale / maxP).toInt
-          println(fmt.format(b.toString, f"$p%.2f", "#" * hashes))
+          if (!trim || hashes > 0) println(fmt.format(b.toString, f"$p%.2f", "#" * hashes))
         }
       }
   }
@@ -153,4 +153,15 @@ object Locomotive2 extends App {
   println(s"mean of the posterior: ${posteriorB.mean}")
 
   println(s"Credible Interval (0.05, 0.95) = ${posteriorB.credibility(0.05, 0.95)}")
+}
+
+object Euro extends App {
+  import ProbabilisticProgramming._
+
+  implicit val likelihood = (hypo: Int, data: Symbol) => if (data == 'H) hypo / 100.0 else 1 - hypo / 100.0
+
+  val prior = 0 to 100
+  val posterior = prior.observe((1 to 140).map(_ => 'H) ++ (1 to 110).map(_ => 'T) : _*)
+
+  posterior.hist(trim = true)
 }
