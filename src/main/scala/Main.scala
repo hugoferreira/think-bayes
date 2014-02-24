@@ -127,7 +127,7 @@ object Locomotive extends App {
 
   implicit val likelihood = (hypo: Int, data: Int) => if (hypo < data) 0.0 else 1.0 / hypo
   val posteriorA = (1 to 1000).observe(60)
-  val posteriorB = (1 to 1000).observe(60)
+  val posteriorB = (1 to 1000).observe(60, 30, 90)
 
   println(s"p(n|60) = ${posteriorA.get(60)}")
   println(s"mean of the posterior: ${posteriorA.mean}")
