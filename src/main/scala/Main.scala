@@ -23,7 +23,7 @@ object ProbabilisticProgramming {
 
     override def toString = probabilities.toString()
 
-    def hist(implicit ord: Ordering[A] = null) =
+    def hist()(implicit ord: Ordering[A] = null) =
       if (probabilities.isEmpty) println("impossible")
       else {
         val data = if (ord == null) probabilities.toList else probabilities.toList.sortBy(_._1)
@@ -72,7 +72,7 @@ object Cookies extends App {
 
   implicit val likelihood = hypotheses(_: Symbol)(_: Symbol)
 
-  hypotheses.keys.observe('vanilla).hist()
+  Seq('Bowl1, 'Bowl2).observe('vanilla).hist()
 }
 
 object MontyHall extends App {
@@ -103,7 +103,7 @@ object MnM extends App {
     hypotheses(hypo)(bag)(color).toDouble
   }
 
-  hypotheses.keys.observe(('bag1, 'yellow)).observe(('bag2, 'green)).hist()
+  Seq('A, 'B).observe(('bag1, 'yellow)).observe(('bag2, 'green)).hist()
 }
 
 object DnD extends App {

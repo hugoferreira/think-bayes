@@ -15,3 +15,7 @@ scalacOptions ++= Seq(
   "-feature",
   "-language:higherKinds",
   "-language:implicitConversions")
+
+initialCommands in console := """
+  import ProbabilisticProgramming._
+"""
