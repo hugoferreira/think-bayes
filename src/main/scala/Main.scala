@@ -9,7 +9,7 @@ object ProbabilisticProgramming {
 
     def mean(implicit n: Numeric[A]) = probabilities.foldLeft(0.0) { case (acc, (k, v)) => acc + n.toDouble(k) * v }
 
-    def cdf(implicit n: Numeric[A]) = probabilities.toList.sortBy(_._1).foldLeft((Map.empty[A, Double], 0.0)) {
+    def cdf(implicit ord: Ordering[A]) = probabilities.toList.sortBy(_._1).foldLeft((Map.empty[A, Double], 0.0)) {
       case ((map, cum), (k, p)) => (map + (k -> (cum + p)), cum + p)
     }._1
 
@@ -110,8 +110,11 @@ object DnD extends App {
   import ProbabilisticProgramming._
 
   implicit val likelihood = (hypo: Int, data: Int) => if (hypo < data) 0.0 else 1.0 / hypo
+  val posterior = Seq(4, 6, 8, 12, 20).observe(6, 6, 8, 7, 7, 5, 4)
 
-  Seq(4, 6, 8, 12, 20).observe(6, 6, 8, 7, 7, 5, 4).hist()
+  posterior.hist()
+  println("------------")
+  posterior.cdf.hist()
 }
 
 object Locomotive extends App {
