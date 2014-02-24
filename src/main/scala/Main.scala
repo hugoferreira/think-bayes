@@ -16,6 +16,7 @@ object ProbabilisticProgramming {
     }._1
 
     def percentile(p: Double)(implicit ord: Ordering[A]): A = cdf.dropWhile { _._2 < p }.head._1
+    def credibility(lower: Double, upper: Double)(implicit ord: Ordering[A]): (A, A) = (percentile(lower), percentile(upper))
 
     def normalized = {
       val x = probabilities.values.sum
@@ -134,7 +135,7 @@ object Locomotive extends App {
   println(s"p(n=90|60,30,90) = ${posteriorB.get(90)}")
   println(s"mean of the posterior: ${posteriorB.mean}")
 
-  println(s"Credible Interval (0.05, 0.95) = (${posteriorB.percentile(0.05)}, ${posteriorB.percentile(0.95)})")
+  println(s"Credible Interval (0.05, 0.95) = ${posteriorB.credibility(0.05, 0.95)}")
 }
 
 object Locomotive2 extends App {
@@ -151,5 +152,5 @@ object Locomotive2 extends App {
   println(s"p(n=90|60,30,90) = ${posteriorB.get(90)}")
   println(s"mean of the posterior: ${posteriorB.mean}")
 
-  println(s"Credible Interval (0.05, 0.95) = (${posteriorB.percentile(0.05)}, ${posteriorB.percentile(0.95)})")
+  println(s"Credible Interval (0.05, 0.95) = ${posteriorB.credibility(0.05, 0.95)}")
 }
