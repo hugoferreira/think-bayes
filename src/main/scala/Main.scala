@@ -3,11 +3,10 @@ import scala.collection.immutable.TreeMap
 object ProbabilisticProgramming {
   implicit class Pmf[A](probabilities: Map[A, Double]) {
     def set(k: A, v: Double) = probabilities + (k -> v)
-    def multiply(k: A, v: Double) =
-      probabilities.get(k) match {
-        case Some(w) => probabilities.updated(k, v * w)
-        case _       => probabilities
-      }
+    def multiply(k: A, v: Double) = probabilities.get(k) match {
+      case Some(w) => probabilities.updated(k, v * w)
+      case _       => probabilities
+    }
 
     def mean(implicit n: Numeric[A]) = probabilities.foldLeft(0.0) { case (acc, (k, v)) => acc + n.toDouble(k) * v }
 
@@ -47,8 +46,10 @@ object ProbabilisticProgramming {
     possibilities.groupBy(identity).map { case (k, as) => k -> as.size.toDouble}.toMap.normalized
 
   object Distributions {
-    def powerLaw[A](possibilities: Iterable[A], alpha: Double = 1.0) =
+    def inversePowerLaw[A](possibilities: Iterable[A], alpha: Double = 1.0) =
       possibilities.zipWithIndex.map { case (k, ix) => (k, Math.pow((ix + 1).toDouble, -alpha)) }.toMap.normalized
+
+    def uniform[A](possibilities: Iterable[A]) = fromIterable(possibilities)
   }
 }
 
@@ -130,10 +131,10 @@ object Locomotive extends App {
   val posteriorB = (1 to 1000).observe(60, 30, 90)
 
   println(s"p(n|60) = ${posteriorA.get(60)}")
-  println(s"mean of the posterior: ${posteriorA.mean}")
+  println(f"mean of the posterior: ${posteriorA.mean}%.2f")
   println(s"p(n=60|60,30,90) = ${posteriorB.get(60)}")
   println(s"p(n=90|60,30,90) = ${posteriorB.get(90)}")
-  println(s"mean of the posterior: ${posteriorB.mean}")
+  println(f"mean of the posterior: ${posteriorB.mean}%.2f")
 
   println(s"Credible Interval (0.05, 0.95) = ${posteriorB.credibility(0.05, 0.95)}")
 }
@@ -142,15 +143,15 @@ object Locomotive2 extends App {
   import ProbabilisticProgramming._
 
   implicit val likelihood = (hypo: Int, data: Int) => if (hypo < data) 0.0 else 1.0 / hypo
-  val hypotheses = Distributions.powerLaw(1 to 1000)
+  val hypotheses = Distributions.inversePowerLaw(1 to 1000)
   val posteriorA = hypotheses.observe(60)
   val posteriorB = hypotheses.observe(60, 30, 90)
 
   println(s"p(n|60) = ${posteriorA.get(60)}")
-  println(s"mean of the posterior: ${posteriorA.mean}")
+  println(f"mean of the posterior: ${posteriorA.mean}%.2f")
   println(s"p(n=60|60,30,90) = ${posteriorB.get(60)}")
   println(s"p(n=90|60,30,90) = ${posteriorB.get(90)}")
-  println(s"mean of the posterior: ${posteriorB.mean}")
+  println(f"mean of the posterior: ${posteriorB.mean}%.2f")
 
   println(s"Credible Interval (0.05, 0.95) = ${posteriorB.credibility(0.05, 0.95)}")
 }
@@ -164,4 +165,7 @@ object Euro extends App {
   val posterior = prior.observe((1 to 140).map(_ => 'H) ++ (1 to 110).map(_ => 'T) : _*)
 
   posterior.hist(trim = true)
+  println(f"Mean = ${posterior.mean}%.2f")
+  println(s"Median = ${posterior.percentile(0.5)}")
+  println(s"Credible Interval (0.05, 0.95) = ${posterior.credibility(0.05, 0.95)}")
 }
