@@ -7,7 +7,11 @@ object ProbabilisticProgramming {
         case _       => probabilities
       }
 
-    def mean(implicit ev: A =:= Int) = probabilities.foldLeft(0.0) { case (acc, (k, v)) => acc + (k * v) }
+    def mean(implicit n: Numeric[A]) = probabilities.foldLeft(0.0) { case (acc, (k, v)) => acc + n.toDouble(k) * v }
+
+    def cdf(implicit n: Numeric[A]) = probabilities.toList.sortBy(_._1).foldLeft((Map.empty[A, Double], 0.0)) {
+      case ((map, cum), (k, p)) => (map + (k -> (cum + p)), cum + p)
+    }._1
 
     def normalized = {
       val x = probabilities.values.sum
@@ -38,8 +42,8 @@ object ProbabilisticProgramming {
     possibilities.groupBy(identity).map { case (k, as) => k -> as.size.toDouble}.toMap.normalized
 
   object Distributions {
-    def powerLaw(possibilities: Iterable[Int], alpha: Double = 1.0) =
-      possibilities.map(k => (k, Math.pow(k.toDouble, -alpha))).toMap.normalized
+    def powerLaw[A](possibilities: Iterable[A], alpha: Double = 1.0) =
+      possibilities.zipWithIndex.map { case (k, ix) => (k, Math.pow((ix + 1).toDouble, -alpha)) }.toMap.normalized
   }
 }
 
